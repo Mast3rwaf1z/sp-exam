@@ -1,9 +1,11 @@
 #include <iostream>
 #include <format>
+#include <cmath>
 
 #include "Simulator.hpp"
 
 using namespace std;
+using namespace stochastic;
 
 Vessel circadian_rhythm(){
   const auto alphaA = 50;
