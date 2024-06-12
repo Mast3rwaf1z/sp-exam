@@ -8,7 +8,7 @@
 using namespace std;
 using namespace stochastic;
 
-/*Vessel circadian_rhythm(){
+Vessel circadian_rhythm(){
     const auto alphaA = 50;
     const auto alpha_A = 500;
     const auto alphaR = 0.01;
@@ -52,13 +52,13 @@ using namespace stochastic;
     v.add(MA >> deltaMA >>= env);
     v.add(MR >> deltaMR >>= env);
     return v;
-}*/
+}
 
-/*Vessel seihr(uint32_t N){
+Vessel seihr(uint32_t N){
     auto v = Vessel{"COVID19 SEIHR: " + std::to_string(N)};
     const auto eps = 0.0009;
-    const auto I0 = size_t(std::round(eps * N));
-    const auto E0 = size_t(std::round(eps * N * 15));
+    const size_t I0 = size_t(std::round(eps * N));
+    const size_t E0 = size_t(std::round(eps * N * 15));
     const auto S0 = N - I0 - E0;
     const auto R0 = 2.4;
     const auto alpha = 1.0 / 5.1;
@@ -78,7 +78,7 @@ using namespace stochastic;
     v.add(I >> kappa >>= H);
     v.add(H >> tau >>= R);
     return v;
-}*/
+}
 
 int main (int argc, char *argv[]) {
     cout << "Starting test program" << endl;
@@ -88,5 +88,9 @@ int main (int argc, char *argv[]) {
     cout << (r1 + r2) << endl;
     cout << (r1 >> 1) << endl;
     cout << (r1 >>= r2) << endl;
+    auto result = circadian_rhythm();
+    auto result1 = seihr(3);
+    cout << result << endl;
+    cout << result1 << endl;
     return 0;
 }
