@@ -1,3 +1,0 @@
-[submodule "argparse"]
-	path = lib/argparse
-	url = gh:p-ranav/argparse
