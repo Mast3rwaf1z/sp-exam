@@ -3,10 +3,14 @@
 #include <cstdint>
 #include <cmath>
 
-#include "Simulator.hpp"
+#include "Vessel.hpp"
+#include "SimulationBatch.hpp"
 
 using namespace std;
 using namespace stochastic;
+
+#define NDK 5822763
+#define NNJ 589755
 
 Vessel circadian_rhythm(){
     const auto alphaA = 50;
@@ -25,7 +29,7 @@ Vessel circadian_rhythm(){
     const auto thetaA = 50;
     const auto thetaR = 100;
     auto v = stochastic::Vessel{"Circadian Rhythm"};
-    const auto env = v.environment<int>();
+    const auto env = v.environment();
     const auto DA = v.add("DA", 1);
     const auto D_A = v.add("D_A", 0);
     const auto DR = v.add("DR", 1);
@@ -81,16 +85,19 @@ Vessel seihr(uint32_t N){
 }
 
 int main (int argc, char *argv[]) {
-    cout << "Starting test program" << endl;
-    Reactant r1 = 1;
-    Reactant r2 = 2;
+    vector<string> args(argv+1, argv+argc);
+    auto T = args.size() > 0 ? stoi(args[0]) : 1000;
 
-    cout << (r1 + r2) << endl;
-    cout << (r1 >> 1) << endl;
-    cout << (r1 >>= r2) << endl;
-    auto result = circadian_rhythm();
-    auto result1 = seihr(3);
-    cout << result << endl;
-    cout << result1 << endl;
-    return 0;
+    cout << "Starting test program" << endl;
+    cout << "Running with T = " << T << endl;
+    SimulationBatch batch({
+        make_shared<Vessel>(circadian_rhythm()),
+        make_shared<Vessel>(seihr(NDK)),
+        make_shared<Vessel>(seihr(NNJ)),
+        make_shared<Vessel>(seihr(10000))
+    },
+    4,
+    T);
+    batch.run();
+
 }
