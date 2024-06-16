@@ -2,6 +2,13 @@
 
 set -ex
 
+# my shit
+cmake -B build
+cmake --build build
+./build/example 0
+./build/example 1
+./build/example 2
+
 function make_latex {
 	author=$1
 	cat <<'EOF'

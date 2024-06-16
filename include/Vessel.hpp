@@ -22,7 +22,7 @@ namespace stochastic {
     class Vessel {
     private:
         string name;
-        vector<shared_ptr<Reactant>> reactants;
+        vector<shared_ptr<Reactant>> reactants = {make_shared<Reactant>("env", 0)};
         vector<shared_ptr<Reaction>> reactions; 
         bool plot = false;
         bool printing = false;
@@ -30,16 +30,16 @@ namespace stochastic {
 
     public:
         vector<shared_ptr<Observer_t>> observers;
-        Vessel(string name);
+        Vessel(const string& name);
         ~Vessel();
-        shared_ptr<Reactant> add(string, double);
+        shared_ptr<Reactant> add(const string&, const double&);
         Vessel add(shared_ptr<Reaction>);
         shared_ptr<Reactant> environment();
-        Vessel run(double);
-        Vessel enable_plotting(bool);
-        Vessel enable_printing(bool);
+        Vessel run(const double&);
+        Vessel enable_plotting(const bool&);
+        Vessel enable_printing(const bool&);
         Vessel add_observer(shared_ptr<Observer_t>);
-        void plot_data(vector<string>);
+        void plot_data(const vector<string>&);
 
         friend ostream& operator<<(ostream& os, const Vessel& v){
             os << "--------------- " << v.name << " ---------------" << endl;
@@ -64,13 +64,13 @@ namespace stochastic {
         }
     };
     
-    Vessel::Vessel(string name) {
+    Vessel::Vessel(const string& name) {
         this->name = name;
     }
     
     Vessel::~Vessel() {
     }
-    shared_ptr<Reactant> Vessel::add(string name, double value) {
+    shared_ptr<Reactant> Vessel::add(const string& name, const double& value) {
         for(auto r : reactants) if(r->name == name){
             throw illegal_reactant_exception(r);
         }
@@ -85,7 +85,7 @@ namespace stochastic {
     }
 
     shared_ptr<Reactant> Vessel::environment(){
-        return make_shared<Reactant>("env", 0);
+        return (*this)["env"];
     }
 
     ReactionBuilder operator>>(shared_ptr<Reactant> lhs, double rhs) {
@@ -106,16 +106,15 @@ namespace stochastic {
         return make_shared<Reaction>(lhs, obj);
     }
     shared_ptr<Reaction> operator>>=(ReactionBuilder lhs, vector<shared_ptr<Reactant>> rhs) {
-        Reaction r(lhs, rhs);
         return make_shared<Reaction>(lhs, rhs);
     }
 
-    Vessel Vessel::enable_plotting(bool enable) {
+    Vessel Vessel::enable_plotting(const bool& enable) {
         plot = enable;
         return *(this);
     }
 
-    Vessel Vessel::enable_printing(bool enable) {
+    Vessel Vessel::enable_printing(const bool& enable) {
         printing = enable;
         return *(this);
     }
@@ -125,7 +124,7 @@ namespace stochastic {
         return *this;
     }
 
-    Vessel Vessel::run(double T) {
+    Vessel Vessel::run(const double& T) {
         double t = 0;
         while(t <= T) {
             for(auto r : this->reactions)
@@ -150,7 +149,7 @@ namespace stochastic {
         return *this;
     }
 
-    void Vessel::plot_data(vector<string> names){
+    void Vessel::plot_data(const vector<string>& names){
         namespace plt = matplot;
         if(!plot) {
             cerr << "Error! plotting is not enabled for this simulation!" << endl;

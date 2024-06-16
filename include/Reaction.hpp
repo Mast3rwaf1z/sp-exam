@@ -20,11 +20,11 @@ namespace stochastic {
         double delay;
 
         Reaction() = default;
-        Reaction(ReactionBuilder, vector<shared_ptr<Reactant>>);
+        Reaction(const ReactionBuilder&, vector<shared_ptr<Reactant>>&);
         ~Reaction();
         void computeDelay();
     };
-    Reaction::Reaction(ReactionBuilder builder, vector<shared_ptr<Reactant>> result) {
+    Reaction::Reaction(const ReactionBuilder& builder, vector<shared_ptr<Reactant>>& result) {
         this->input = builder.lhs;
         this->lambda = builder.rhs;
         this->output = result;
@@ -56,9 +56,9 @@ namespace stochastic {
         }
         delay = exponential_distribution(lambda * product)(gen);
     }
-    shared_ptr<Reaction> argmin(vector<shared_ptr<Reaction>> delays) { // remember RAII
-        shared_ptr<Reaction> choice = delays[0];
-        for(auto reaction : delays) {
+    shared_ptr<Reaction> argmin(vector<shared_ptr<Reaction>> reactions) {
+        shared_ptr<Reaction> choice = reactions[0];
+        for(auto reaction : reactions) {
             if(reaction->delay <= choice->delay) {
                 choice = reaction;
             }

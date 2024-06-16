@@ -11,6 +11,8 @@ add_executable(main src/main.cpp)
 add_executable(benchmark src/benchmark.cpp)
 add_executable(example src/example.cpp)
 add_executable(hospitalized src/hospitalized.cpp)
+add_executable(hospitalized_v2 src/hospitalized_v2.cpp)
+add_executable(observer src/observer.cpp)
 add_executable(test_reactant src/tests/test_reactant.cpp)
 add_executable(test_reaction src/tests/test_reaction.cpp)
 add_executable(test_vessel src/tests/test_vessel.cpp)
@@ -21,6 +23,9 @@ target_link_libraries(hospitalized
     matplot
 )
 
+target_link_libraries(hospitalized_v2
+    matplot
+)
 target_link_libraries(main
     matplot
 )
@@ -37,6 +42,9 @@ target_link_libraries(test_reaction
     matplot
 )
 target_link_libraries(test_vessel
+    matplot
+)
+target_link_libraries(observer
     matplot
 )
 

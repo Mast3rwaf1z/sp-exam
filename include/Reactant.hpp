@@ -15,7 +15,7 @@ namespace stochastic {
         double max;
         double min;
         Reactant() = default;
-        Reactant(string name, double value);
+        Reactant(const string& name, const double& value);
         ~Reactant();
 
         Reactant& operator++() {
@@ -43,7 +43,7 @@ namespace stochastic {
         }
     };
 
-    Reactant::Reactant(string name, double value) {
+    Reactant::Reactant(const string& name, const double& value) {
         this->value = value;
         this->max = value;
         this->min = value;

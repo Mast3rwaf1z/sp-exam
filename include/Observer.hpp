@@ -1,8 +1,6 @@
 #pragma once
 #include <memory>
 
-#include "Vessel.hpp"
-
 using namespace std;
 
 namespace stochastic{

@@ -10,7 +10,7 @@ using namespace std;
 
 namespace stochastic {
     template<typename T>
-    bool all(vector<T> input, function<bool(T)> validator) {
+    bool all(const vector<T>& input, const function<bool(T)>& validator) {
         for(auto value : input) {
             if(!validator(value))
                 return false;
@@ -18,7 +18,7 @@ namespace stochastic {
         return true;
     }
     template<typename T>
-    bool any(vector<T> input, function<bool(T)> validator) {
+    bool any(const vector<T>& input, const function<bool(T)>& validator) {
         for(auto value : input) {
             if(validator(value))
                 return true;
@@ -27,7 +27,7 @@ namespace stochastic {
     }
 
     template<typename T>
-    string join(vector<T> input, string delimiter) {
+    string join(const vector<T>& input, const string& delimiter) {
         stringstream ss;
         const auto last = &(input.back());
         for(auto index = 0; index < input.size()-1; index++)
@@ -37,7 +37,7 @@ namespace stochastic {
     }
 
     template<typename T>
-    vector<T> make_range(size_t size) {
+    vector<T> make_range(const size_t& size) {
         vector<T> result;
         for(auto i = 0; i < size; i++)
             result.push_back((T)i);
@@ -45,29 +45,37 @@ namespace stochastic {
     }
 
     template<typename T>
-    vector<T> make_range(size_t lower, size_t upper) {
+    vector<T> make_range(const size_t& lower, const size_t& upper) {
         vector<T> result;
         for(auto i = lower; i < upper; i++)
             result.push_back((T)i);
         return result;
     }
     template<typename T>
-    vector<T> make_range(size_t size, function<T(int)> func) {
+    vector<T> make_range(const size_t& size, const function<T(int)>& func) {
         vector<T> result; 
         for(auto i = 0; i < size; i++)
             result.push_back(func(i));
         return result;
     }
     template<typename T>
-    vector<T> make_range(size_t lower, size_t upper, function<T(int)> func) {
+    vector<T> make_range(const size_t& lower, const size_t& upper, const function<T(int)>& func) {
         vector<T> result;
         for(auto i = lower; i < upper; i++)
             result.push_back(func(i));
         return result;
     }
 
+    template<typename T1, typename T2>
+    vector<T2> make_range(const vector<T1>& input, const function<T2(T1)>& func){
+        vector<T2> result;
+        for(auto value : input)
+            result.push_back(func(value));
+        return result;
+    }
+
     template<typename T>
-    T sum(vector<T> inputs) {
+    T sum(const vector<T>& inputs) {
         auto result = 0;
         for(auto v : inputs)
             result += v;
@@ -75,7 +83,7 @@ namespace stochastic {
     }
 
     template<typename T>
-    T mean(vector<T> inputs) {
+    T mean(const vector<T>& inputs) {
         return sum(inputs)/inputs.size();
     }
 }

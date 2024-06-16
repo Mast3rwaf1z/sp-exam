@@ -16,7 +16,7 @@ class TestTemplate {
         }
         map<string, test_function> tests;
 
-        TestTemplate add(string name, test_function f) {
+        TestTemplate add(const string& name, const test_function& f) {
             tests[name] = f;
             return *this;
         }

@@ -13,9 +13,9 @@ int main(int argc, char const *argv[]) {
     map<int, double> speeds;
     for(auto cores : make_range<int>(1, 13)) {
         auto start = chrono::high_resolution_clock::now();
-        auto simulations = make_range<shared_ptr<Vessel>>(1, 101, [](int index){ return make_shared<Vessel>(seihr(index*10000)); });
+        auto simulations = make_range<Vessel>(1, 101, [](int index){ return circadian_rhythm(); });
         cout << "Simulations using " << cores << " core(s)" << endl;
-        SimulationBatch batch1(simulations, cores, 100);
+        SimulationBatch batch1(simulations, cores, 24);
         batch1.run();
         auto end = chrono::high_resolution_clock::now();
         speeds[cores] = chrono::duration_cast<chrono::seconds>(end - start).count();

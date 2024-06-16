@@ -25,6 +25,6 @@ int main (int argc, char *argv[]) {
     simulation.enable_plotting(false);
     simulation.run(T);
     cout << simulation << endl;
-    simulation.plot_data({"A", "R", "C"});
+    //simulation.plot_data({"A", "R", "C"});
 
 }

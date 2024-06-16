@@ -31,6 +31,32 @@ It was an interesting exercise, i started off by making overloads like this:
 
 but the subclassing was getting way too involved and i think using the builder class here makes the code much more concise.
 
+The operators are defined:
+
+\begin{lstlisting}[style=colorC++]
+    ReactionBuilder operator>>(shared_ptr<Reactant> lhs, double rhs) {
+        ReactionBuilder builder({lhs}, rhs);
+        return builder;
+    }
+    ReactionBuilder operator>>(vector<shared_ptr<Reactant>> lhs, double rhs) {
+        ReactionBuilder builder(lhs, rhs);
+        return builder;
+    }
+
+    vector<shared_ptr<Reactant>> operator+(shared_ptr<Reactant> lhs, shared_ptr<Reactant> rhs) {
+        return {lhs, rhs};
+    }
+
+    shared_ptr<Reaction> operator>>=(ReactionBuilder lhs, shared_ptr<Reactant> rhs) {
+        vector<shared_ptr<Reactant>> obj{rhs};
+        return make_shared<Reaction>(lhs, obj);
+    }
+    shared_ptr<Reaction> operator>>=(ReactionBuilder lhs, vector<shared_ptr<Reactant>> rhs) {
+        Reaction r(lhs, rhs);
+        return make_shared<Reaction>(lhs, rhs);
+    }
+\end{lstlisting}
+
 An alternate solution that i came up with was to add reactions based on a parsing system from a string, so adding "A + C -> B + C" would result in a Reaction with inputs A and C, and outputs B and C with a rate of lambda, possibly also added in the add function?
 
 \requirement{
@@ -143,7 +169,7 @@ there's some key functions present here:
 
 \begin{lstlisting}[style=colorC++]
     template<typename T>
-    bool all(vector<T> input, function<bool(T)> validator) {
+    bool all(const vector<T>& input, const function<bool(T)>& validator) {
         for(auto value : input) {
             if(!validator(value))
                 return false;
@@ -191,9 +217,9 @@ there's some key functions present here:
 \end{lstlisting}
 
 \begin{lstlisting}[style=colorC++]
-    shared_ptr<Reaction> argmin(vector<shared_ptr<Reaction>> delays) { // remember RAII
-        shared_ptr<Reaction> choice = delays[0];
-        for(auto reaction : delays) {
+    shared_ptr<Reaction> argmin(vector<shared_ptr<Reaction>> reactions) {
+        shared_ptr<Reaction> choice = reactions[0];
+        for(auto reaction : reactions) {
             if(reaction->delay <= choice->delay) {
                 choice = reaction;
             }
@@ -276,24 +302,61 @@ I used a library https://github.com/alandefreitas/matplotplusplus. It follows th
 
 the plots:
 
-\includegraphics[width=\textwidth]{figures/Example 1.png}
+\includegraphics[width=\textwidth]{figures/Circadian Rhythm.png}
 \includegraphics[width=\textwidth]{figures/Example 2.png}
+\includegraphics[width=\textwidth]{figures/Example 3.png}
 \includegraphics[width=\textwidth]{figures/Example 3.png}
 
 and these plots do follow the same trend as the ones in the exam set.
 
 \requirement{
     Implement a generic support for (any) user-supplied state observer function object or provide a lazy trajectory generation interface (coroutine). The observer itself should be supplied by the user/test and not be part of the library. To demonstrate the generic support, estimate the peak of hospitalized agents in Covid-19 example without storing entire trajectory data. Record the peak hospitalization values for population sizes of NNJ and NDK.
-}{Not implemented}
+}{Done}
 
-Another one i wanted to save for last, as its quite challenging, i was thinking something like:
+I was saving this one for last as it seemed very challenging, so the following requirement does not use it. You can create an observer subclass of the Observer_t class i've created.
+
+This is just a symbolic class that doesn't do anything, this is to hide the templating i do. This is because i want it to be able to record anything, be it reactant objects, values, vessel states etc.
+
+using it just boils down to:
 
 \begin{lstlisting}[style=colorC++]
-    MaxObserver observer;
-    vessel.add_observer(observer);
+    template<typename T>
+    class Observer : public Observer_t {
+    private:
+        function<void(void)> collector;
+    public:
+        T data;
+        shared_ptr<Vessel> vessel;
+        Observer() = default;
+        Observer(function<void(void)>);
+        ~Observer() = default;
+        void add_vessel(shared_ptr<Vessel> v) {
+            this->vessel = v;
+        }
+        virtual void run() override {
+            return collector();
+        }
+    };
+    template<typename T>
+    Observer<T>::Observer(function<void(void)> c) {
+        collector = c;
+    }
 \end{lstlisting}
 
-and then have a shared\_ptr to the data storage for that observer, when the simulation finishes, you can access the values here.
+Creating the class like so, and adding it to a vessel:
+
+\begin{lstlisting}[style=colorC++]
+    int main(){
+        auto v = circadian_rhythm();
+        shared_ptr<Observer<double>> observer = make_shared<Observer<double>>([&v, &observer](){ observer->data = v["A"]->value; });
+        v.enable_printing(true);
+        v.add_observer(observer);
+        v.run(10);
+        cout << observer->data << endl;
+    }
+\end{lstlisting}
+
+aceessing the data type in the observer is down to the user, so it could be vector<double> recording all instances of this variable.
 
 \requirement{
     Implement support for multiple computer cores by parallelizing the computation of several simulations at the same time. Estimate the likely (average) value of the hospitalized peak over 100 simulations.
@@ -306,7 +369,9 @@ Finally as specified the parallel computation has been tested on 100 simulations
 
 The source code is too long and not particularly complicated, if its of interest, look in include/SimulationBatch.hpp
 
-\emph{3.02 Hospitalized peak}
+\textbf{3.02 Hospitalized peak}
+
+There are two versions, the initial version without the generic observer class, and one with. The one with the observer did not get finished as it required some extra work, but it shows roughly what my idea was.
 
 \requirement{
     Implement unit tests (e.g. test symbol table methods, their failure cases, and pretty-printing of reaction rules).
@@ -377,9 +442,9 @@ Very easy, i've just made a little main function:
         map<int, double> speeds;
         for(auto cores : make_range<int>(1, 13)) {
             auto start = chrono::high_resolution_clock::now();
-            auto simulations = make_range<shared_ptr<Vessel>>(1, 101, [](int index){ return make_shared<Vessel>(seihr(index*100)); });
+            auto simulations = make_range<shared_ptr<Vessel>>(1, 101, [](int index){ return make_shared<Vessel>(circadian_rhythm()); });
             cout << "Simulations using " << cores << " core(s)" << endl;
-            SimulationBatch batch1(simulations, cores, 100);
+            SimulationBatch batch1(simulations, cores, 24);
             batch1.run();
             auto end = chrono::high_resolution_clock::now();
             speeds[cores] = chrono::duration_cast<chrono::seconds>(end - start).count();
@@ -387,11 +452,27 @@ Very easy, i've just made a little main function:
         for(auto [cores, speed] : speeds) {
             cout << "Core count: " << cores << "\tSpeed(seconds): " << speed << endl;
         }
-
+    
         return 0;
     }
+    
 \end{lstlisting}
 
 the results are: ... this will take a while... (cmake --build build \&\& ./build/benchmark > test\_results.txt at 4am)
+
+\begin{lstlisting}
+    Core count: 1   Speed(seconds): 1174
+    Core count: 2   Speed(seconds): 599
+    Core count: 3   Speed(seconds): 404
+    Core count: 4   Speed(seconds): 311
+    Core count: 5   Speed(seconds): 247
+    Core count: 6   Speed(seconds): 212
+    Core count: 7   Speed(seconds): 199
+    Core count: 8   Speed(seconds): 196
+    Core count: 9   Speed(seconds): 176
+    Core count: 10  Speed(seconds): 154
+    Core count: 11  Speed(seconds): 147
+    Core count: 12  Speed(seconds): 146
+\end{lstlisting}
 
 As expected, we're doing something that's embarrasingly parallelizable, so it figures that using all my 12 threads results in a larger speedup for each core until i hit hyperthreading.
