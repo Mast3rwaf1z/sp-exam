@@ -5,29 +5,41 @@ set(CMAKE_CXX_STANDARD 23)
 # add libs
 include_directories(include)
 
-add_definitions(-DDEBUG=0)
-
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/lib/matplotlib-cpp)
-
+add_subdirectory(lib/matplotplusplus)
 
 add_executable(main src/main.cpp)
 add_executable(benchmark src/benchmark.cpp)
 add_executable(example src/example.cpp)
+add_executable(hospitalized src/hospitalized.cpp)
+add_executable(test_reactant src/tests/test_reactant.cpp)
+add_executable(test_reaction src/tests/test_reaction.cpp)
+add_executable(test_vessel src/tests/test_vessel.cpp)
 
-find_package(PythonLibs 3.12)
-target_include_directories(main PRIVATE ${PYTHON_INCLUDE_DIRS})
-target_link_libraries(main ${PYTHON_LIBRARIES})
-target_include_directories(benchmark PRIVATE ${PYTHON_INCLUDE_DIRS})
-target_link_libraries(benchmark ${PYTHON_LIBRARIES})
-target_include_directories(example PRIVATE ${PYTHON_INCLUDE_DIRS})
-target_link_libraries(example ${PYTHON_LIBRARIES})
+enable_testing()
+
+target_link_libraries(hospitalized
+    matplot
+)
 
 target_link_libraries(main
-    MatplotlibC++
+    matplot
 )
 target_link_libraries(benchmark
-    MatplotlibC++
+    matplot
 )
 target_link_libraries(example
-    MatplotlibC++
+    matplot
 )
+target_link_libraries(test_reactant
+    matplot
+)
+target_link_libraries(test_reaction
+    matplot
+)
+target_link_libraries(test_vessel
+    matplot
+)
+
+add_test(NAME test_reactant COMMAND test_reactant)
+add_test(NAME test_reaction COMMAND test_reaction)
+add_test(NAME test_vessel COMMAND test_vessel)

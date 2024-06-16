@@ -1,40 +1,22 @@
+#include <ranges>
+
+#include "matplot/matplot.h"
+
 #include "Vessel.hpp"
+#include "Models.hpp"
 
 using namespace stochastic;
 
-Vessel example1(){
-    Vessel v{"Example 1"};
-    const auto lambda = 0.001;
-    const auto A = v.add("A", 100);
-    const auto B = v.add("B", 0);
-    const auto C = v.add("C", 1);
-    v.add((A + C) >> lambda >>= (B + C));
-    return v;
-}
-
-Vessel example2(){
-    Vessel v{"Example 2"};
-    const auto lambda = 0.001;
-    const auto A = v.add("A", 100);
-    const auto B = v.add("B", 0);
-    const auto C = v.add("C", 2);
-    v.add((A + C) >> lambda >>= (B + C));
-    return v;
-}
-
-Vessel example3(){
-    Vessel v{"Example 3"};
-    const auto lambda = 0.001;
-    const auto A = v.add("A", 50);
-    const auto B = v.add("B", 50);
-    const auto C = v.add("C", 1);
-    v.add((A + C) >> lambda >>= (B + C));
-    return v;
-}
-int main(){
-    auto sims = {example1(), example2(), example3()};
-    for(auto sim : sims) {
+int main(int argc, char* argv[]){
+    vector<string> args(argv+1, argv+argc);
+    auto plottarget = args.size() > 0 ? stoi(args[0]) : -1;
+    vector<Vessel> sims = {example1(), example2(), example3()};
+    for(auto [i, sim] : views::zip(make_range<int>(sims.size()), sims)) {
+        if(i == plottarget) sim.enable_plotting(true);
+        sim.enable_printing(false);
         sim.run(2000);
         cout << sim << endl;
+        if(i == plottarget) 
+            sim.plot_data({"A", "B", "C"});
     }
 }

@@ -3,3 +3,10 @@ build
 .direnv
 .vscode
 result
+figures
+
+# docs
+*.aux
+*.log
+*.pdf
+listing.tex

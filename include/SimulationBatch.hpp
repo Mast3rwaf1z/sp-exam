@@ -3,6 +3,7 @@
 #include <future>
 #include <functional>
 #include <mutex>
+#include <ranges>
 
 #include "Vessel.hpp"
 
@@ -13,15 +14,16 @@ namespace stochastic {
         future<void> instance;
         shared_ptr<mutex> m;
         int T;
+        int id;
     public:
-        Worker(int);
+        Worker(int, int);
         ~Worker();
         void start();
         void add(shared_ptr<Vessel>);
         void run();
         void join();
     };
-    Worker::Worker(int T) : T(T) {
+    Worker::Worker(int T, int id) : T(T), id(id) {
         m = make_shared<mutex>();
     }
     Worker::~Worker(){
@@ -31,8 +33,9 @@ namespace stochastic {
         instance = async(launch::async, [&](){ return this->run(); });
     }
     void Worker::run() {
-        for(auto simulation : simulations) {
-            simulation->run(T, false);
+        for(auto [i, simulation] : views::zip(make_range<int>(simulations.size()), simulations)) {
+            simulation->run(T);
+            cout << "Worker " << id << " Finished a simulation. " << simulations.size()-i << " left." << endl;
         }
         m->unlock();
     }
@@ -57,7 +60,7 @@ namespace stochastic {
     SimulationBatch::SimulationBatch(vector<shared_ptr<Vessel>> simulations, int coreCount, int T) {
         this->simulations = simulations;
         for(auto i = 0; i < coreCount; i++) {
-            workers.push_back(make_shared<Worker>(T));
+            workers.push_back(make_shared<Worker>(T, i));
         }
         for(auto i = 0; i < simulations.size(); i++) {
             workers[i%coreCount]->add(simulations[i]);

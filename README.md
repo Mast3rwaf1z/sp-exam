@@ -13,3 +13,5 @@
     cmake --build build
     ./build/main
 ```
+
+tested hospitalizations peak at 3.02

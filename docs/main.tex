@@ -1,0 +1,397 @@
+\newcommand{\requirement}[2]{
+    \newpage
+    \hrule
+    \vspace{10pt}
+    {
+        \large \noindent #1
+    }\\
+    \textbf{Status:} #2
+    \vspace{10pt}
+    \hrule
+    \vspace{10pt}
+}
+
+\section{Preliminaries}
+The exam project is not finished, there are some requirements that i did not have enough time to finish. I was planning to study for the exam by finishing the loose ends on the project.
+
+Additionally i have also borrowed the latex-code snippet and edited it to suit this project.
+
+\requirement{
+    The library should overload operators to support the reaction rule typesetting directly in C++ code.
+}{Done}
+The library does overload every operator needed, I have implemented a ReactionBuilder class, as the examples in the exam set created reactions in two steps. The operators for the reactions are defined in the include/vessel.hpp file.
+
+It was an interesting exercise, i started off by making overloads like this:
+
+\begin{lstlisting}[style=colorC++]
+    CatalystReactant operator+(Reactant lhs, Reactant rhs);
+    Reactant operator>>(Reactant, double);
+    Reaction operator>>=(Reactant, Reactant);
+\end{lstlisting}
+
+but the subclassing was getting way too involved and i think using the builder class here makes the code much more concise.
+
+An alternate solution that i came up with was to add reactions based on a parsing system from a string, so adding "A + C -> B + C" would result in a Reaction with inputs A and C, and outputs B and C with a rate of lambda, possibly also added in the add function?
+
+\requirement{
+    Provide pretty-printing of the reaction network in a: human readable format and b: network graph (e.g. Fig. 4)
+}{Partially done}
+
+I have made the pretty printing part, but i descided that fiddling with graphviz was the very last thing i would do after writing the actual report, as that would require understanding how the library works first, unlike matplot, which has similar syntax to matplotlib in python as shown in later requirements.
+
+a snippet of the pretty printing is shown below:
+
+\begin{lstlisting}
+    A       --\lambda->   env
+    D_A     --\lambda->   MA + D_A
+    A       --\lambda->   env
+    D_A     --\lambda->   MA + D_A
+    MA      --\lambda->   MA + A
+    D_A     --\lambda->   MA + D_A
+    MA      --\lambda->   env
+    C       --\lambda->   R
+    MA      --\lambda->   env
+    A + R   --\lambda->   C
+    MA      --\lambda->   MA + A
+    --------------- Circadian Rhythm ---------------
+    --------------- Reactions ---------------
+    A + DA  --\lambda->   D_A
+    D_A     --\lambda->   DA + A
+    A + DR  --\lambda->   D_R
+    D_R     --\lambda->   DR + A
+    D_A     --\lambda->   MA + D_A
+    DA      --\lambda->   MA + DA
+    D_R     --\lambda->   MR + D_R
+    DR      --\lambda->   MR + DR
+    MA      --\lambda->   MA + A
+    MR      --\lambda->   MR + R
+    A + R   --\lambda->   C
+    C       --\lambda->   R
+    A       --\lambda->   env
+    R       --\lambda->   env
+    MA      --\lambda->   env
+    MR      --\lambda->   env
+    --------------- Reactants ---------------
+    DA:0
+    D_A:1
+    DR:0
+    D_R:1
+    MA:61
+    MR:50
+    A:2046
+    R:0
+    C:166
+\end{lstlisting}
+
+\requirement{
+    Implement a generic symbol table to store and lookup objects of user-defined key and value types. Support failure cases when a: the table does not contain a looked up symbol, b: the table already contains a symbol that is being added. Demonstrate the usage of the symbol table with the reactants (names and initial counts).
+}{Partially done}
+
+This requirement is done in some aspects, as there isn't a table, and its not generic, but it is able to check whether a reactant is present when it is being added, and throw and exception if it is, and its also able to throw an exception if it is not present when being accessed.
+
+Its not the best implementation, but its a start.
+
+\requirement{
+    Implement the stochastic simulation (Alg. 1) of the system using the reaction rules.
+}{Done}
+
+Its been implemented in three parts:
+
+\begin{lstlisting}[caption=algorithm implementation, style=colorC++]
+    Vessel Vessel::run(double T) {
+        double t = 0;
+        while(t <= T) {
+            for(auto r : this->reactions)
+                r->computeDelay();
+            auto r = argmin(reactions);
+            t = t + r->delay;
+            if(all(r->input, (function<bool(shared_ptr<Reactant>)>)[](shared_ptr<Reactant> r) { return r->value > 0; })) {
+                if(printing) cout << *(r) << endl;
+                for(auto i : r->input)
+                    i->operator--();
+                for(auto o : r->output)
+                    o->operator++();
+            }
+            if(plot) for(auto reactant : reactants){
+                plotting_data[reactant->name].first.push_back(t);
+                plotting_data[reactant->name].second.push_back(reactant->value);
+            }
+        }
+        return *this;
+    }
+\end{lstlisting}
+
+there's some key functions present here:
+\begin{itemize}
+    \item{
+        \textbf{all}\\
+        This is a function defined in utils.hpp that takes a vector and a function, returns a bool based on each element and returns whether all bools are true
+    }
+    \item{
+        \textbf{computeDelay}\\
+        As shown below it is implemented using the exponential distribution and a random device, this is where RAII really became a principle that saved me, i started changing some of the key attributes to pointers, as i was using way too many copy constructors to pass around the data.
+    }
+    \item{
+        \textbf{operators ++ and --}\\
+        The reactants has ++ and -- overloaded, this was neccessary for a later exercise, but its honestly not the best solution, i think i want to ideally make like a sampler functionality that can be set at configure time of the vessel, and let it sample stuff like the maximum value of a reactant, like i need in a later requirement.
+    }
+    \item{
+        \textbf{argmin}\\
+        This function takes a list of reactants and finds the lowest delay. This is another time where RAII was very important, as if the default copy or move constructor was just used here, the delays that were just computed would be lost. Therefore it is again useful to use the smart pointers here.
+    }
+\end{itemize}
+
+\begin{lstlisting}[style=colorC++]
+    template<typename T>
+    bool all(vector<T> input, function<bool(T)> validator) {
+        for(auto value : input) {
+            if(!validator(value))
+                return false;
+        }
+        return true;
+    }
+\end{lstlisting}
+
+\begin{lstlisting}[style=colorC++]
+    void Reaction::computeDelay() {
+        double product = 1;
+        random_device rd;
+        mt19937 gen(rd());
+        for(auto i : input){
+            product *= i->value;
+        }
+        delay = exponential_distribution(lambda * product)(gen);
+    }
+\end{lstlisting}
+
+\begin{lstlisting}[style=colorC++]
+    Reactant& operator++() {
+            value++;
+            if(value > max)
+                max = value;
+            return *this;
+        }
+        Reactant& operator--() {
+            value--;
+            if(value < max)
+                max = value;
+            return *this;
+        }
+
+        Reactant operator++(int) {
+            Reactant old = *this;
+            operator++();
+            return old;
+        }
+        Reactant operator--(int) {
+            Reactant old = *this;
+            operator--();
+            return old;
+        }
+\end{lstlisting}
+
+\begin{lstlisting}[style=colorC++]
+    shared_ptr<Reaction> argmin(vector<shared_ptr<Reaction>> delays) { // remember RAII
+        shared_ptr<Reaction> choice = delays[0];
+        for(auto reaction : delays) {
+            if(reaction->delay <= choice->delay) {
+                choice = reaction;
+            }
+        }
+        return choice;
+    }
+\end{lstlisting}
+
+\requirement{
+    Demonstrate the application of the library on the three examples (shown in Fig. 1, 2, 3).
+}{Done}
+
+They were modeled as such:
+
+\begin{lstlisting}[style=colorC++]
+Vessel example1(){
+    Vessel v{"Example 1"};
+    const auto lambda = 0.001;
+    const auto A = v.add("A", 100);
+    const auto B = v.add("B", 0);
+    const auto C = v.add("C", 1);
+    v.add((A + C) >> lambda >>= (B + C));
+    return v;
+}
+
+Vessel example2(){
+    Vessel v{"Example 2"};
+    const auto lambda = 0.001;
+    const auto A = v.add("A", 100);
+    const auto B = v.add("B", 0);
+    const auto C = v.add("C", 2);
+    v.add((A + C) >> lambda >>= (B + C));
+    return v;
+}
+
+Vessel example3(){
+    Vessel v{"Example 3"};
+    const auto lambda = 0.001;
+    const auto A = v.add("A", 50);
+    const auto B = v.add("B", 50);
+    const auto C = v.add("C", 1);
+    v.add((A + C) >> lambda >>= (B + C));
+    return v;
+}
+\end{lstlisting}
+
+As such it just follows the examples in the requirements. the output of the program:
+
+\begin{lstlisting}
+    --------------- Example 1 ---------------
+    --------------- Reactions ---------------
+    A + C   --\lambda->   B + C
+    --------------- Reactants ---------------
+    A:10
+    B:90
+    C:1
+    
+    --------------- Example 2 ---------------
+    --------------- Reactions ---------------
+    A + C   --\lambda->   B + C
+    --------------- Reactants ---------------
+    A:1
+    B:99
+    C:2
+    
+    --------------- Example 3 ---------------
+    --------------- Reactions ---------------
+    A + C   --\lambda->   B + C
+    --------------- Reactants ---------------
+    A:3
+    B:97
+    C:1
+\end{lstlisting}
+
+\requirement{
+    Display simulation trajectories of how the amounts change. External tools/libraries can be used to visualize.
+}{Done}
+
+I used a library https://github.com/alandefreitas/matplotplusplus. It follows the same syntax as matplotlib, and used gnuplot as the backend.
+
+the plots:
+
+\includegraphics[width=\textwidth]{figures/Example 1.png}
+\includegraphics[width=\textwidth]{figures/Example 2.png}
+\includegraphics[width=\textwidth]{figures/Example 3.png}
+
+and these plots do follow the same trend as the ones in the exam set.
+
+\requirement{
+    Implement a generic support for (any) user-supplied state observer function object or provide a lazy trajectory generation interface (coroutine). The observer itself should be supplied by the user/test and not be part of the library. To demonstrate the generic support, estimate the peak of hospitalized agents in Covid-19 example without storing entire trajectory data. Record the peak hospitalization values for population sizes of NNJ and NDK.
+}{Not implemented}
+
+Another one i wanted to save for last, as its quite challenging, i was thinking something like:
+
+\begin{lstlisting}[style=colorC++]
+    MaxObserver observer;
+    vessel.add_observer(observer);
+\end{lstlisting}
+
+and then have a shared\_ptr to the data storage for that observer, when the simulation finishes, you can access the values here.
+
+\requirement{
+    Implement support for multiple computer cores by parallelizing the computation of several simulations at the same time. Estimate the likely (average) value of the hospitalized peak over 100 simulations.
+}{Done}
+This was implemented as a threadpool with n workers. I evenly split out tasks for the workers and wait for all of them to finish. I have used a mutex to wait for each worker in a join method. 
+
+Workers are launched asynchonously
+
+Finally as specified the parallel computation has been tested on 100 simulations and recording the maximum values. the result is:
+
+The source code is too long and not particularly complicated, if its of interest, look in include/SimulationBatch.hpp
+
+\emph{3.02 Hospitalized peak}
+
+\requirement{
+    Implement unit tests (e.g. test symbol table methods, their failure cases, and pretty-printing of reaction rules).
+}{Partially done}
+
+I've created a few example tests under src/tests, the most notable aspect is that i didn't have time to research testing frameworks so i implemented a mock class myself
+
+\begin{lstlisting}[style=colorC++]
+    class TestTemplate {
+        string name;
+    
+        public:
+            TestTemplate(string name) : name(name) {
+    
+            }
+            map<string, test_function> tests;
+    
+            TestTemplate add(string name, test_function f) {
+                tests[name] = f;
+                return *this;
+            }
+    
+            void run(){
+                cout << "--------------- " << this->name << "---------------" << endl;
+                for(auto [name, test] : tests) try {
+                    cout << name << "\t........\t";
+                    test();
+                    cout << "ok" << endl;
+                }
+                catch(const std::exception& e) {
+                    cout << "fail" << endl;
+                    cerr << e.what() << endl;
+                }
+            }
+    };
+\end{lstlisting}
+
+and if we look into the vessel test i've defined, you can see the 3rd requirement's test has been defined:
+
+\begin{lstlisting}[style=colorC++]
+    int main(int argc, char const *argv[]){
+        TestTemplate t("Vessel tests");
+        t.add("Test collissions", [](){
+            Vessel v("test");
+            auto r = v.add("test", 1);
+            bool state = false;
+            try {
+                auto r1 = v.add("test", 2);
+            }
+            catch(const illegal_reactant_exception& e){
+                state = true;
+            }
+            assert(state);
+        });
+
+        t.run();
+    }
+\end{lstlisting}
+
+\requirement{
+    Benchmark and compare the stochastic simulation performance (e.g. the time it takes to compute 100 simulations a single core, multiple cores, or improved implementation). Record the timings and make your conclusions
+}{Done}
+
+Very easy, i've just made a little main function:
+
+\begin{lstlisting}[style=colorC++]
+    int main(int argc, char const *argv[]) {
+        map<int, double> speeds;
+        for(auto cores : make_range<int>(1, 13)) {
+            auto start = chrono::high_resolution_clock::now();
+            auto simulations = make_range<shared_ptr<Vessel>>(1, 101, [](int index){ return make_shared<Vessel>(seihr(index*100)); });
+            cout << "Simulations using " << cores << " core(s)" << endl;
+            SimulationBatch batch1(simulations, cores, 100);
+            batch1.run();
+            auto end = chrono::high_resolution_clock::now();
+            speeds[cores] = chrono::duration_cast<chrono::seconds>(end - start).count();
+        }
+        for(auto [cores, speed] : speeds) {
+            cout << "Core count: " << cores << "\tSpeed(seconds): " << speed << endl;
+        }
+
+        return 0;
+    }
+\end{lstlisting}
+
+the results are: ... this will take a while... (cmake --build build \&\& ./build/benchmark > test\_results.txt at 4am)
+
+As expected, we're doing something that's embarrasingly parallelizable, so it figures that using all my 12 threads results in a larger speedup for each core until i hit hyperthreading.

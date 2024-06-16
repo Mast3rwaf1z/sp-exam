@@ -18,6 +18,15 @@ namespace stochastic {
         return true;
     }
     template<typename T>
+    bool any(vector<T> input, function<bool(T)> validator) {
+        for(auto value : input) {
+            if(validator(value))
+                return true;
+        }
+        return false;
+    }
+
+    template<typename T>
     string join(vector<T> input, string delimiter) {
         stringstream ss;
         const auto last = &(input.back());
@@ -55,5 +64,18 @@ namespace stochastic {
         for(auto i = lower; i < upper; i++)
             result.push_back(func(i));
         return result;
+    }
+
+    template<typename T>
+    T sum(vector<T> inputs) {
+        auto result = 0;
+        for(auto v : inputs)
+            result += v;
+        return result;
+    }
+
+    template<typename T>
+    T mean(vector<T> inputs) {
+        return sum(inputs)/inputs.size();
     }
 }
