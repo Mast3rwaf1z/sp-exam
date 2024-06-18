@@ -3,6 +3,10 @@
 #include <map>
 #include <iostream>
 
+#define new_test(tests, name, f) tests.add(name, [](){  \
+    f                                                   \
+})
+
 using namespace std;
 
 typedef function<void(void)> test_function;

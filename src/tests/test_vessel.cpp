@@ -7,11 +7,9 @@
 
 using namespace stochastic;
 
-// sorry this is just a quick implementation...
-
 int main(int argc, char const *argv[]){
-    TestTemplate t("Vessel tests");
-    t.add("Test collissions", [](){
+    TestTemplate test("Vessel tests");
+    new_test(test, "Test collissions",
         Vessel v("test");
         auto r = v.add("test", 1);
         bool state = false;
@@ -22,7 +20,7 @@ int main(int argc, char const *argv[]){
             state = true;
         }
         assert(state);
-    });
+    );
 
-    t.run();
+    test.run();
 }

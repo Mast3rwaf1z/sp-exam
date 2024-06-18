@@ -7,13 +7,11 @@
 
 using namespace stochastic;
 
-// sorry this is just a quick implementation...
-
 int main(int argc, char const *argv[]){
-    TestTemplate t("Reaction tests");
-    t.add("Test reaction constructors", [](){
+    TestTemplate test("Reaction tests");
+    new_test(test, "Test reaction constructors",
         // etc etc...
-    });
+    );
 
-    t.run();
+    test.run();
 }

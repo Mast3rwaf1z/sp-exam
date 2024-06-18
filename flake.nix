@@ -2,7 +2,7 @@
     description = "Selected Topics in Programming exam project";
 
     inputs = {
-        nixpkgs.url = "nixpkgs/nixos-23.11";
+        nixpkgs.url = "nixpkgs/nixos-24.05";
     };
 
     outputs = { self, nixpkgs }: let 
@@ -23,7 +23,7 @@
         });
     in {
         devShells.${system}.default = pkgs.mkShell {
-            packages = with pkgs; [ cmake ];
+            packages = with pkgs; [ cmake gnuplot ];
         };
         packages.${system} = {
             default = default_package "main";
