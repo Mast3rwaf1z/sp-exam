@@ -19,7 +19,7 @@ namespace stochastic {
         Worker(const int&, const int&);
         ~Worker();
         void start();
-        void add(const Vessel&);
+        void add(const shared_ptr<Vessel>&);
         void run();
         void join();
     };
@@ -39,8 +39,8 @@ namespace stochastic {
         }
         m->unlock();
     }
-    void Worker::add(const Vessel& simulation){
-        simulations.push_back(make_shared<Vessel>(simulation));
+    void Worker::add(const shared_ptr<Vessel>& simulation){
+        simulations.push_back(simulation);
     }
     void Worker::join(){
         // wait on the lock and unlock it again immediately
@@ -53,21 +53,26 @@ namespace stochastic {
         vector<shared_ptr<Worker>> workers;
         vector<shared_ptr<Vessel>> simulations;
         SimulationBatch(const vector<Vessel>&, const int&, const int&);
+        SimulationBatch(const vector<shared_ptr<Vessel>>&, const int&, const int&);
         ~SimulationBatch();
         void run();
     };
     
-    SimulationBatch::SimulationBatch(const vector<Vessel>& simulations, const int& coreCount, const int& T) {
-        this->simulations = make_range<Vessel, shared_ptr<Vessel>>(simulations, [](const Vessel& vessel){
-            return make_shared<Vessel>(vessel);
-        });
+    SimulationBatch::SimulationBatch(const vector<shared_ptr<Vessel>>& simulations, const int& coreCount, const int& T) {
+        this->simulations = simulations;
+
         for(auto i = 0; i < coreCount; i++) {
             workers.push_back(make_shared<Worker>(T, i));
         }
         for(auto i = 0; i < simulations.size(); i++) {
             workers[i%coreCount]->add(simulations[i]);
         }
+    }
 
+    SimulationBatch::SimulationBatch(const vector<Vessel>& simulations, const int& coreCount, const int& T){
+        SimulationBatch(make_range<Vessel, shared_ptr<Vessel>>(simulations, [](const Vessel& vessel){
+            return make_shared<Vessel>(vessel);
+        }), coreCount, T);
     }
     
     SimulationBatch::~SimulationBatch(){

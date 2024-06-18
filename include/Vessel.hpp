@@ -21,7 +21,6 @@ namespace stochastic {
 
     class Vessel {
     private:
-        string name;
         vector<shared_ptr<Reactant>> reactants = {make_shared<Reactant>("env", 0)};
         vector<shared_ptr<Reaction>> reactions; 
         bool plot = false;
@@ -29,6 +28,7 @@ namespace stochastic {
         map<string, pair<vector<double>, vector<double>>> plotting_data;
 
     public:
+        string name;
         vector<shared_ptr<Observer_t>> observers;
         Vessel(const string& name);
         ~Vessel() = default;

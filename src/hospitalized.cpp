@@ -6,9 +6,9 @@ using namespace std;
 using namespace stochastic;
 
 int main(int argc, char const *argv[]){
-    SimulationBatch batch(make_range<Vessel>(100, [](int i){
-        return seihr(NNJ);
-    }), 12, 100);
+    SimulationBatch batch(make_range<shared_ptr<Vessel>>(100, [](int i){
+        return make_shared<Vessel>(seihr(NNJ));
+    }), 8, 100);
     batch.run();
 
     vector<double> results;

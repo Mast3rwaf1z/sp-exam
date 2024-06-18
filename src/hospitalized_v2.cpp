@@ -33,30 +33,25 @@ Observer<T>::Observer(function<void(void)> c) {
 }
 
 int main(){
-    vector<shared_ptr<Observer<double>>> observers;
-    SimulationBatch batch(make_range<Vessel>(100, [&](int i){
-        auto v = seihr(NNJ);
-        shared_ptr<Observer<double>> observer = make_shared<Observer<double>>([&v, observer](){
-            if(v["H"]->value > observer->data)
-                observer->data = v["H"]->value;
+    auto vessels = make_range<shared_ptr<Vessel>>(100, [](int i){
+        return make_shared<Vessel>(seihr(NNJ));
+    });
+    auto observers = make_range<shared_ptr<Observer<double>>>(100, [&vessels](int i){
+        auto vessel = vessels[i];
+        shared_ptr<Observer<double>> observer = make_shared<Observer<double>>([&vessel, &observer](){
+            if((*vessel)["H"]->value > observer->data)
+                observer->data = (*vessel)["H"]->value;
         });
         observer->setData(0);
-        v.add_observer(observer);
-        observers.push_back(observer);
-        return v;
-    }), 12, 100);
+        return observer;
+    });
 
+    SimulationBatch batch(vessels, 8, 100);
     batch.run();
-    vector<double> results;
-    for(auto observer : observers){
-        results.push_back(observer->data);
-    }
-    vector<double> results_s;
-    for(auto sim : batch.simulations){
-        results_s.push_back((*sim)["H"]->max);
-    }
-    cout << "Mean hospitalized: " << mean(results) << endl;
 
-    // This implementation should get removed, its just a jank workaround to get the max, but it should ideally get fetched from the observer.
-    cout << "Sanity check:      " << mean(results_s) << endl;
+    vector<double> result;
+    for(auto observer : observers){
+        result.push_back(observer->data);
+    }
+    cout << "result: " << mean(result) << endl;
 }
