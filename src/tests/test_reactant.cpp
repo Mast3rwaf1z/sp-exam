@@ -31,6 +31,12 @@ int main(int argc, char const *argv[]){
         assert(ss.str() == format("{}:{}", r.name, r.value));
     );
 
+    new_test(test, "Test constexpr reactant", 
+        if constexpr (Reactant("test", 0).name == "test") {
+            assert(true);
+        }
+    );
+
     test.run();
     
 }

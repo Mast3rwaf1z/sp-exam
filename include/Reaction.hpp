@@ -20,17 +20,14 @@ namespace stochastic {
         double delay;
 
         Reaction() = default;
-        Reaction(const ReactionBuilder&, vector<shared_ptr<Reactant>>&);
-        ~Reaction();
+        constexpr Reaction(const Input&, const double, const Output&);
+        constexpr ~Reaction() = default;
         void computeDelay();
     };
-    Reaction::Reaction(const ReactionBuilder& builder, vector<shared_ptr<Reactant>>& result) {
-        this->input = builder.lhs;
-        this->lambda = builder.rhs;
-        this->output = result;
-    }
-    
-    Reaction::~Reaction() {
+    constexpr Reaction::Reaction(const Input& input, const double lambda, const Output& output) {
+        this->input = input;
+        this->lambda = lambda;
+        this->output = output;
     }
 
     ostream& operator<<(ostream& os, const Reaction& r) {

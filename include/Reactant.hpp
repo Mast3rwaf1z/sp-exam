@@ -10,13 +10,13 @@ using namespace std;
 namespace stochastic {
     class Reactant {
     public:
-        string name;
+        const string name;
         double value;
         double max;
         double min;
         Reactant() = default;
-        Reactant(const string& name, const double& value);
-        ~Reactant();
+        constexpr Reactant(const string& name, const double& value);
+        constexpr ~Reactant() = default;
 
         Reactant& operator++() {
             value++;
@@ -43,14 +43,10 @@ namespace stochastic {
         }
     };
 
-    Reactant::Reactant(const string& name, const double& value) {
+    constexpr Reactant::Reactant(const string& name, const double& value) : name(name) {
         this->value = value;
         this->max = value;
         this->min = value;
-        this->name = name;
-    }
-    
-    Reactant::~Reactant() {
     }
 
     ostream& operator<<(ostream& os, const Reactant& r) {

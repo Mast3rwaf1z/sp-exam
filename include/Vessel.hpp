@@ -9,8 +9,8 @@
 
 #include "matplot/matplot.h"
 
-#include "Reactant.hpp"
 #include "ReactionBuilder.hpp"
+#include "Reactant.hpp"
 #include "Reaction.hpp"
 #include "Utils.hpp"
 #include "Observer.hpp"
@@ -31,7 +31,7 @@ namespace stochastic {
     public:
         vector<shared_ptr<Observer_t>> observers;
         Vessel(const string& name);
-        ~Vessel();
+        ~Vessel() = default;
         shared_ptr<Reactant> add(const string&, const double&);
         Vessel add(shared_ptr<Reaction>);
         shared_ptr<Reactant> environment();
@@ -64,12 +64,9 @@ namespace stochastic {
         }
     };
     
-    Vessel::Vessel(const string& name) {
-        this->name = name;
+    Vessel::Vessel(const string& name) : name(name) {
     }
-    
-    Vessel::~Vessel() {
-    }
+
     shared_ptr<Reactant> Vessel::add(const string& name, const double& value) {
         for(auto r : reactants) if(r->name == name){
             throw illegal_reactant_exception(r);
@@ -92,21 +89,22 @@ namespace stochastic {
         ReactionBuilder builder({lhs}, rhs);
         return builder;
     }
-    ReactionBuilder operator>>(vector<shared_ptr<Reactant>> lhs, double rhs) {
-        ReactionBuilder builder(lhs, rhs);
-        return builder;
+    ReactionBuilder operator>>(Input lhs, double rhs) {
+        return {lhs, rhs};
     }
 
-    vector<shared_ptr<Reactant>> operator+(shared_ptr<Reactant> lhs, shared_ptr<Reactant> rhs) {
+    Input operator+(shared_ptr<Reactant> lhs, shared_ptr<Reactant> rhs) {
         return {lhs, rhs};
     }
 
     shared_ptr<Reaction> operator>>=(ReactionBuilder lhs, shared_ptr<Reactant> rhs) {
-        vector<shared_ptr<Reactant>> obj{rhs};
-        return make_shared<Reaction>(lhs, obj);
+        vector<shared_ptr<Reactant>> output{rhs};
+        auto [input, lambda] = lhs;
+        return make_shared<Reaction>(input, lambda, output);
     }
-    shared_ptr<Reaction> operator>>=(ReactionBuilder lhs, vector<shared_ptr<Reactant>> rhs) {
-        return make_shared<Reaction>(lhs, rhs);
+    shared_ptr<Reaction> operator>>=(ReactionBuilder lhs, Output output) {
+        auto [input, lambda] = lhs;
+        return make_shared<Reaction>(input, lambda, output);
     }
 
     Vessel Vessel::enable_plotting(const bool& enable) {

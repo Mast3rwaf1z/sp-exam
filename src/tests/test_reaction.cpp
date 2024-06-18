@@ -1,9 +1,11 @@
 #include <cassert>
 #include <sstream>
 #include <format>
+#include <memory>
 
 #include "Reaction.hpp"
 #include "Test.hpp"
+#include "Vessel.hpp"
 
 using namespace stochastic;
 
