@@ -16,7 +16,7 @@ int main(int argc, char const *argv[]){
         assert(r1.name != "test");
     );
 
-    new_test(test, "Test Reactant operators",
+    new_test(test, "Test Reactant operators", 
         Reactant r("test", 1);
         r++;
         assert(r.value == 2);

@@ -58,11 +58,10 @@ namespace stochastic {
     }
 
     class illegal_reactant_exception : public exception {
-        shared_ptr<Reactant> r;
+        Reactant r;
         string message = "";
         public:
-            illegal_reactant_exception(shared_ptr<Reactant> r) {
-                this->r = r;
+            illegal_reactant_exception(Reactant& r) : r(r) {
             }
             illegal_reactant_exception() {
                 this->message = "No message";
@@ -70,7 +69,7 @@ namespace stochastic {
             string what(){
                 if(message != "") return message;
                 stringstream ss;
-                ss << "\033[38;2;255;0;0m" << "ERROR! illegal reactant" << "\033[0m " << r->name << ":" << r->value;
+                ss << "\033[38;2;255;0;0m" << "ERROR! illegal reactant" << "\033[0m " << r.name << ":" << r.value;
                 return ss.str();
             }
     };

@@ -10,7 +10,7 @@ namespace stochastic {
 
     template<typename T>
     constexpr bool all(const vector<T>& input){
-        for(const auto e : input)
+        for(const auto& e : input)
             if (!e)
                 return false;
         return true;
@@ -18,7 +18,7 @@ namespace stochastic {
 
     template<typename T>
     bool all(const vector<T>& input, const function<bool(T)>& validator) {
-        for(const auto value : input) {
+        for(const auto& value : input) {
             if(!validator(value))
                 return false;
         }

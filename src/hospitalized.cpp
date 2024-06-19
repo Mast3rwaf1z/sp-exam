@@ -13,7 +13,7 @@ int main(int argc, char const *argv[]){
 
     vector<double> results;
     for(auto sim : batch.simulations)
-        results.push_back((*sim)["H"]->max);
+        results.push_back((*sim)["H"].max);
     std::cout << "---------------" << endl;
     std::cout << "Hospitalized mean: " << mean(results) << endl;
 }
