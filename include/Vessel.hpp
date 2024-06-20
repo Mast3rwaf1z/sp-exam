@@ -30,11 +30,11 @@ namespace stochastic {
     class Vessel {
     private:
         string name;
-        map<string, double> reactants = {{"env", 0}};
+        unordered_map<string, double> reactants = {{"env", 0}};
         vector<Reaction> reactions; 
         bool plot = false;
         bool printing = false;
-        map<string, pair<vector<double>, vector<double>>> plotting_data;
+        unordered_map<string, pair<vector<double>, vector<double>>> plotting_data;
 
     public:
         vector<shared_ptr<Observer_t>> observers;
@@ -132,7 +132,7 @@ namespace stochastic {
             auto& r = argmin(reactions);
             t = t + r.delay;
             DEBUG; // sleep for 1 if debugging is enabled
-            if(all(r.input, (function<bool(Reactant)>)[this](Reactant r) { return operator[](r.name) > 0; })) {
+            if(all(r.input, (function<bool(Reactant)>)[this](Reactant r) { return reactants[r.name] > 0; })) {
                 if(printing) cout << r << endl;
                 for(auto& i : r.input)
                     reactants[i.name]--;

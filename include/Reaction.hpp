@@ -23,7 +23,7 @@ namespace stochastic {
         constexpr Reaction() = default;
         constexpr Reaction(const vector<Reactant>&, const double, const vector<Reactant>&);
         constexpr ~Reaction() = default;
-        void computeDelay(map<string, double>&);
+        void computeDelay(const unordered_map<string, double>);
 
 
         constexpr Reaction& operator=(const Reaction& rhs){
@@ -51,7 +51,7 @@ namespace stochastic {
         return os;
     }
 
-    void Reaction::computeDelay(map<string, double>& reactants) {
+    void Reaction::computeDelay(unordered_map<string, double> reactants) {
         double product = 1;
         random_device rd;
         mt19937 gen(rd());
