@@ -30,7 +30,7 @@ Observer<T>::Observer(function<void(void)> c) {
 
 int main(){
     auto v = circadian_rhythm();
-    shared_ptr<Observer<double>> observer = make_shared<Observer<double>>([&v, &observer](){ observer->data = v["A"].value; });
+    shared_ptr<Observer<double>> observer = make_shared<Observer<double>>([&v, &observer](){ observer->data = v["A"]; });
     v.enable_printing(true);
     v.add_observer(observer);
     v.run(10);

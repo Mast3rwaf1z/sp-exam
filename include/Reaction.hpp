@@ -4,6 +4,7 @@
 #include <memory>
 #include <thread>
 #include <chrono>
+#include <iostream>
 
 #include "ReactionBuilder.hpp"
 #include "Reactant.hpp"
@@ -14,30 +15,35 @@ using namespace std;
 namespace stochastic {
     class Reaction {
     public:
-        vector<shared_ptr<Reactant>> input;
+        vector<Reactant> input;
         double lambda;
-        vector<shared_ptr<Reactant>> output;
+        vector<Reactant> output;
         double delay;
 
-        Reaction() = default;
-        Reaction(const vector<Reactant>&, const double, const vector<Reactant>&);
-        ~Reaction() = default;
-        void computeDelay();
+        constexpr Reaction() = default;
+        constexpr Reaction(const vector<Reactant>&, const double, const vector<Reactant>&);
+        constexpr ~Reaction() = default;
+        void computeDelay(map<string, double>&);
+
+
+        constexpr Reaction& operator=(const Reaction& rhs){
+            this->input = rhs.input;
+            this->lambda = rhs.lambda;
+            this->output = rhs.output;
+            return *this;
+        }
     };
-    Reaction::Reaction(const vector<Reactant>& input, const double lambda, const vector<Reactant>& output) : lambda(lambda) {
-        for(const auto& element : input)
-            this->input.push_back(make_shared<Reactant>(element));
-        for(const auto& element : output)
-            this->output.push_back(make_shared<Reactant>(element));
+    constexpr Reaction::Reaction(const vector<Reactant>& input, const double lambda, const vector<Reactant>& output) : input(input), lambda(lambda), output(output) {
     }
+
 
     ostream& operator<<(ostream& os, const Reaction& r) {
         vector<string> inputNames;
         vector<string> outputNames;
         for(const auto& input : r.input)
-            inputNames.push_back(input->name);
+            inputNames.push_back(input.name);
         for(const auto& output : r.output)
-            outputNames.push_back(output->name);
+            outputNames.push_back(output.name);
 
         os << join(inputNames, " + ");
         os << "\t--" << "\u03bb" << "->\t";
@@ -45,22 +51,23 @@ namespace stochastic {
         return os;
     }
 
-    void Reaction::computeDelay() {
+    void Reaction::computeDelay(map<string, double>& reactants) {
         double product = 1;
         random_device rd;
         mt19937 gen(rd());
         for(const auto& i : input){
-            product *= i->value;
+            product *= reactants[i.name];
         }
+
         delay = exponential_distribution(lambda * product)(gen);
     }
     Reaction& argmin(vector<Reaction>& reactions) {
-        auto& choice = reactions[0];
-        for(const auto& reaction : reactions) {
-            if(reaction.delay <= choice.delay) {
-                choice = reaction;
+        auto choice = 0;
+        for(auto i = 0; i < reactions.size(); i++){
+            if(reactions[i].delay <= reactions[choice].delay){
+                choice = i;
             }
         }
-        return choice;
+        return reactions[choice];
     }
 }

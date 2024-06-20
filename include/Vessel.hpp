@@ -15,6 +15,14 @@
 #include "Utils.hpp"
 #include "Observer.hpp"
 
+#if 0
+    #include <chrono>
+    #include <thread>
+    #define DEBUG this_thread::sleep_for(chrono::seconds(1))
+#else
+    #define DEBUG 
+#endif
+
 using namespace std;
 
 namespace stochastic {
@@ -22,7 +30,7 @@ namespace stochastic {
     class Vessel {
     private:
         string name;
-        vector<Reactant> reactants = {Reactant("env", 0)};
+        map<string, double> reactants = {{"env", 0}};
         vector<Reaction> reactions; 
         bool plot = false;
         bool printing = false;
@@ -32,9 +40,9 @@ namespace stochastic {
         vector<shared_ptr<Observer_t>> observers;
         Vessel(const string& name);
         ~Vessel() = default;
-        Reactant& add(const string&, const double&);
+        Reactant add(const string&, const double&);
         Vessel& add(const Reaction&);
-        Reactant& environment();
+        Reactant environment();
         Vessel& run(const double&);
         Vessel& enable_plotting(const bool&);
         Vessel& enable_printing(const bool&);
@@ -48,60 +56,55 @@ namespace stochastic {
                 os << reaction << endl;
             }
             os << "--------------- Reactants ---------------" << endl;
-            for(const auto& reactant : v.reactants) {
-                os << reactant << endl;
+            for(const auto& [name, value] : v.reactants) {
+                os << Reactant(name, value) << endl;
             }
             return os;
         }
         
-        Reactant& operator[](const string& name) {
-            for(auto& reactant : reactants) {
-                if(reactant.name == name) {
-                    return reactant;
-                }
-            }
-            throw illegal_reactant_exception();
+        double& operator[](const string& name) {
+            return reactants[name];
         }
     };
     
     Vessel::Vessel(const string& name) {
         this->name = name;
     }
-    Reactant& Vessel::add(const string& name, const double& value) {
-        for(auto& r : reactants) if(r.name == name){
-            throw illegal_reactant_exception(r);
+    Reactant Vessel::add(const string& name, const double& value) {
+        for(auto& [name_, value_] : reactants) if(name_ == name){
+            throw illegal_reactant_exception(Reactant(name_, value_));
         }
         auto r = Reactant(name, value);
-        reactants.push_back(r);
+        reactants[name] = value;
         plotting_data[name] = {{}, {}};
-        return reactants.back();
+        return r;
     }
     Vessel& Vessel::add(const Reaction& r){
         this->reactions.push_back(r);
         return *(this);
     }
 
-    Reactant& Vessel::environment(){
-        return (*this)["env"];
+    Reactant Vessel::environment(){
+        return Reactant("env", operator[]("env"));
     }
 
-    ReactionBuilder operator>>(const Reactant& lhs, const double rhs) {
+    constexpr ReactionBuilder operator>>(const Reactant& lhs, const double rhs) {
         return {{lhs}, rhs};
     }
-    ReactionBuilder operator>>(const vector<Reactant>& lhs, const double rhs) {
+    constexpr ReactionBuilder operator>>(const vector<Reactant>& lhs, const double rhs) {
         return {lhs, rhs};
     }
 
-    vector<Reactant> operator+(const Reactant& lhs, const Reactant& rhs) {
+    constexpr vector<Reactant> operator+(const Reactant& lhs, const Reactant& rhs) {
         return {lhs, rhs};
     }
 
-    Reaction operator>>=(const ReactionBuilder& lhs, const Reactant& rhs) {
+    constexpr Reaction operator>>=(const ReactionBuilder& lhs, const Reactant& rhs) {
         vector<Reactant> obj{rhs};
         auto& [input, lambda] = lhs;
         return Reaction(input, lambda, obj);
     }
-    Reaction operator>>=(const ReactionBuilder& lhs, const vector<Reactant>& rhs) {
+    constexpr Reaction operator>>=(const ReactionBuilder& lhs, const vector<Reactant>& rhs) {
         auto& [input, lambda] = lhs;
         return Reaction(input, lambda, rhs);
     }
@@ -125,22 +128,23 @@ namespace stochastic {
         double t = 0;
         while(t <= T) {
             for(auto& r : this->reactions)
-                r.computeDelay();
+                r.computeDelay(reactants);
             auto& r = argmin(reactions);
             t = t + r.delay;
-            if(all(r.input, (function<bool(shared_ptr<Reactant>)>)[](shared_ptr<Reactant> r) { return r->value > 0; })) {
+            DEBUG; // sleep for 1 if debugging is enabled
+            if(all(r.input, (function<bool(Reactant)>)[this](Reactant r) { return operator[](r.name) > 0; })) {
                 if(printing) cout << r << endl;
                 for(auto& i : r.input)
-                    i->operator--();
+                    reactants[i.name]--;
                 for(auto& o : r.output)
-                    o->operator++();
+                    reactants[o.name]++;
             }
             for(auto observer : observers)
                 observer->run();
 
-            if(plot) for(const auto& reactant : reactants){
-                plotting_data[reactant.name].first.push_back(t);
-                plotting_data[reactant.name].second.push_back(reactant.value);
+            if(plot) for(const auto& [name, value] : reactants){
+                plotting_data[name].first.push_back(t);
+                plotting_data[name].second.push_back(value);
             }
         }
         return *this;

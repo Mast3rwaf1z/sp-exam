@@ -14,9 +14,9 @@ namespace stochastic {
         double value;
         double max;
         double min;
-        Reactant() = default;
-        Reactant(const string& name, const double& value);
-        ~Reactant();
+        constexpr Reactant() = default;
+        constexpr Reactant(const string& name, const double& value);
+        constexpr ~Reactant() = default;
 
         Reactant& operator++() {
             value++;
@@ -43,14 +43,7 @@ namespace stochastic {
         }
     };
 
-    Reactant::Reactant(const string& name, const double& value) {
-        this->value = value;
-        this->max = value;
-        this->min = value;
-        this->name = name;
-    }
-    
-    Reactant::~Reactant() {
+    constexpr Reactant::Reactant(const string& name, const double& value) : value(value), max(value), min(value), name(name) {
     }
 
     ostream& operator<<(ostream& os, const Reactant& r) {
@@ -61,10 +54,7 @@ namespace stochastic {
         Reactant r;
         string message = "";
         public:
-            illegal_reactant_exception(Reactant& r) : r(r) {
-            }
-            illegal_reactant_exception() {
-                this->message = "No message";
+            illegal_reactant_exception(Reactant r) : r(r) {
             }
             string what(){
                 if(message != "") return message;

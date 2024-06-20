@@ -37,8 +37,8 @@ int main(){
     SimulationBatch batch(make_range<Vessel>(100, [&](int i){
         auto v = seihr(NNJ);
         shared_ptr<Observer<double>> observer = make_shared<Observer<double>>([&v, observer](){
-            if(v["H"].value > observer->data)
-                observer->data = v["H"].value;
+            if(v["H"] > observer->data)
+                observer->data = v["H"];
         });
         observer->setData(0);
         v.add_observer(observer);
@@ -53,7 +53,7 @@ int main(){
     }
     vector<double> results_s;
     for(auto sim : batch.simulations){
-        results_s.push_back((*sim)["H"].max);
+        results_s.push_back((*sim)["H"]);
     }
     cout << "Mean hospitalized: " << mean(results) << endl;
 

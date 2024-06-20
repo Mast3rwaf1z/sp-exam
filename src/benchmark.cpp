@@ -11,7 +11,7 @@ using namespace std;
 
 int main(int argc, char const *argv[]) {
     map<int, double> speeds;
-    for(auto cores : make_range<int>(1, 9)) {
+    for(auto cores : make_range<int>(1, 13)) {
         auto start = chrono::high_resolution_clock::now();
         auto simulations = make_range<Vessel>(1, 101, [](int index){ return circadian_rhythm(); });
         cout << "Simulations using " << cores << " core(s)" << endl;
