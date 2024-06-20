@@ -12,8 +12,8 @@ int main(int argc, char const *argv[]){
     batch.run();
 
     vector<double> results;
-    for(auto sim : batch.simulations)
-        results.push_back((*sim)["H"]);
+    for(auto& sim : batch.simulations)
+        results.push_back(sim["H"]);
     std::cout << "---------------" << endl;
     std::cout << "Hospitalized mean: " << mean(results) << endl;
 }

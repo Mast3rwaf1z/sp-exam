@@ -52,8 +52,8 @@ int main(){
         results.push_back(observer->data);
     }
     vector<double> results_s;
-    for(auto sim : batch.simulations){
-        results_s.push_back((*sim)["H"]);
+    for(auto& sim : batch.simulations){
+        results_s.push_back(sim["H"]);
     }
     cout << "Mean hospitalized: " << mean(results) << endl;
 

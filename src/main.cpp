@@ -4,10 +4,7 @@
 #include <cmath>
 #include <map>
 
-#include "matplot/matplot.h"
-
 #include "Vessel.hpp"
-#include "SimulationBatch.hpp"
 #include "Models.hpp"
 #include "Observer.hpp"
 

@@ -10,12 +10,14 @@
 namespace stochastic {
     class Worker{
     private:
-        vector<shared_ptr<Vessel>> simulations;
+        vector<Vessel> simulations;
         future<void> instance;
-        shared_ptr<mutex> m;
+        mutex m;
         const int T;
         const int id;
     public:
+        Worker() = default;
+        Worker(const Worker&);
         Worker(const int&, const int&);
         ~Worker();
         void start();
@@ -23,49 +25,48 @@ namespace stochastic {
         void run();
         void join();
     };
+    Worker::Worker(const Worker& worker) : T(worker.T), id(worker.id) {
+
+    }
     Worker::Worker(const int& T, const int& id) : T(T), id(id) {
-        m = make_shared<mutex>();
     }
     Worker::~Worker(){
     }
     void Worker::start() {
-        m->lock();
+        m.lock();
         instance = async(launch::async, [&](){ return this->run(); });
     }
     void Worker::run() {
-        for(auto [i, simulation] : views::zip(make_range<int>(simulations.size()), simulations)) {
-            simulation->run(T);
+        for(auto i : make_range<int>(simulations.size())){
+            simulations[i].run(T);
             cout << "Worker " << id << " Finished a simulation. " << simulations.size()-i << " left." << endl;
         }
-        m->unlock();
+        m.unlock();
     }
     void Worker::add(const Vessel& simulation){
-        simulations.push_back(make_shared<Vessel>(simulation));
+        simulations.push_back(simulation);
     }
     void Worker::join(){
         // wait on the lock and unlock it again immediately
-        m->lock();
-        m->unlock();
+        m.lock();
+        m.unlock();
     }
 
     class SimulationBatch {
     public:
-        vector<shared_ptr<Worker>> workers;
-        vector<shared_ptr<Vessel>> simulations;
+        vector<Worker> workers;
+        vector<Vessel> simulations;
         SimulationBatch(const vector<Vessel>&, const int&, const int&);
         ~SimulationBatch();
         void run();
     };
     
-    SimulationBatch::SimulationBatch(const vector<Vessel>& simulations, const int& coreCount, const int& T) {
-        this->simulations = make_range<Vessel, shared_ptr<Vessel>>(simulations, [](const Vessel& vessel){
-            return make_shared<Vessel>(vessel);
-        });
+    SimulationBatch::SimulationBatch(const vector<Vessel>& simulations, const int& coreCount, const int& T) : simulations(simulations) {
         for(auto i = 0; i < coreCount; i++) {
-            workers.push_back(make_shared<Worker>(T, i));
+            workers.push_back(Worker(T, i));
         }
         for(auto i = 0; i < simulations.size(); i++) {
-            workers[i%coreCount]->add(simulations[i]);
+            workers[i%coreCount].add(simulations[i]);
         }
 
     }
@@ -74,14 +75,14 @@ namespace stochastic {
     }
     void SimulationBatch::run(){
         for(auto& worker : workers)
-            worker->start();
+            worker.start();
         cout << "Started " << workers.size() << " Workers..." << endl;
         
-        for(const auto& worker : workers)
-            worker->join();
+        for(auto& worker : workers)
+            worker.join();
         
-        for(auto simulation : simulations){
-            cout << *(simulation) << endl;
+        for(auto& simulation : simulations){
+            cout << simulation << endl;
         }
     }
     
